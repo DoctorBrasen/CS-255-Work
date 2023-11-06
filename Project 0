@@ -1,0 +1,310 @@
+
+// ---------------------------------------------------------------------------
+// Name: Braden Drewery
+// Course-Section: CS255-Section 02
+// Assignment: Project #0
+// Date due: 08/24/2023
+// Description: 
+/*The program's purpose is to read information from a tornado database that is given by the user. 
+The program will use a menu interface to lead the user through choices to display the data they are asking for.
+The program will use a function to sort through the file and read the info based on the specifications laid out to ensure data aligns with their respective categories.
+*/
+
+// ---------------------------------------------------------------------------
+
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <iomanip>
+
+using namespace std;
+
+/*
+    *Below are the required function prototypes.  You are limited to ONLY
+    *these, exactly these, and no more.
+*/
+void initializeArray(int year[], const int maxSize);
+int loadProducts(int year[], string county[], string category[], double maxwind[], int victims[], string fN);
+//The below functions require you to implement them
+int menu();
+void displayAll(int year[], string county[], string category[], double maxwind[], int victims[], const int numTorn);
+void numByYear(int year[], const int numTorn, int& result);
+int vicByYear(int year[], int victims[], const int numTorn);
+void tornByCounty(int year[], string county[], string category[], double maxwind[], int victims[], const int numTorn, int& result);
+
+//!!**Daily HW2 - Part 1 of 2 --
+/*First we set the decimals of all future numbers that require decimals to two. 
+Then, we initialize the variable "maxSize" with an integer data type to 100. 
+We initialize the variables "year" and "victims" with the integer data type and define it as an array with the size being the "maxSize" stated before.
+We initialize the variables "county" and "category" with the string class and define it as an array with the size stated before.
+We initialize the variable "maxwind" with the double data type and define it as an area with the size stated before.
+*/
+
+int main()
+{
+    cout<<fixed<<setprecision(2);
+    const int maxSize = 100;
+    int year[maxSize];
+    string county[maxSize];
+    string category[maxSize];
+    double maxwind[maxSize];
+    int victims[maxSize];
+    int numTorn=0;
+    int choice;
+    
+//The initializeArray function is called to set initial values for the 'year' array. 
+    initializeArray(year, maxSize);
+
+    string fileName;
+    //This program then prompts the user for a filename of a tornado database and reads into it. 
+    cout<<"Enter the filename of your tornado database."<<endl;
+    getline(cin, fileName);
+    //The numTorn variable is used to store the number of tornados that is read to enter a loop controlled by a menu. 
+    numTorn = loadProducts(year, county, category, maxwind, victims, fileName);
+
+    int result;
+    //The user's choice will dictate what section of the menu is interacted with. 
+    choice = menu();
+    //The loop will continue until option 6 is chosen.
+    while(choice != 6)
+    {
+    //Option 1 would set the result to the number of tornadoes 'numTorn'
+        if(choice == 1)
+        {
+        	result = numTorn;  
+        }
+    //Option 2 displays all tornadoes' information using "displayAll" function and setting the result to # of tornadoes. 
+        else if(choice == 2)
+        {
+            displayAll(year, county, category, maxwind, victims, numTorn);
+            result = numTorn;
+        }
+    //Option 3 calls the 'numbyYear' function to count the # of tornadoes by years and store the number as 'result'.
+        else if(choice == 3)
+        {
+        	numByYear(year, numTorn, result);
+        }
+    //Option 4 calls the 'vicbyYear' function to count the # of victims by year and stores the number as 'result'.
+        else if(choice == 4)
+        {
+        	result = vicByYear(year, victims, numTorn);
+        }
+    //Option 5 calls the 'tornbyCounty' function to gather information about the tornadoes per county and store that information into 'result'.
+        else if(choice == 5)
+        {
+        	tornByCounty(year, county, category, maxwind, victims, numTorn, result);
+        }
+    
+        cout<<"Result: "<<result<<endl;
+        choice = menu();
+    }
+	//Option 6 stops the loop and displays a goodbye message.
+    cout<<"Goodbye.  Have a nice day!"<<endl;
+}
+
+//---------------------------------------------------------------------------
+/* initializeArray() initializes the year array to all default values, -1.
+*     Because we have arrays that have a maxSize and we don't expect to actually
+*     have as many items as maxSize, most of our arrays will be empty.  Having
+*     a sentinal value for empty slots COULD help us when processing data.
+*     INCOMING DATA: an int array, a const int representing maxSize
+*     OUTGOING DATA: nothing returned, updated array to default values*/
+void initializeArray(int year[], const int maxSize)
+{
+    for(int i=0; i<maxSize; i++){
+        year[i] = -1;
+    }
+}
+
+//!!**Daily HW2 - Part 2 of 2 -- Comment loadProducts()**!!
+/*The function, loadProducts(), is designed to read and analyze all information about categories from the file provided. 
+It reads data from a file specified by the parameter labeled "fileName" and fills the arrays with information about the products. 
+The incoming data in each line of the file is expected to be in the format (year, county, category, maxwind, victims).
+Ifstream says if this file name is correct then read into it. 
+The function reads each line of the file, splits it into individual components (year, county, category, maxwind, victims). 
+It then converts these components to their respective data types. 
+The commas and spaces are used as separators to extract values. 
+Then the program takes values in all of the different categories' arrays and keeps track of how many products have been processed using the variable "count".
+
+Once all lines have been processed, the function closes the file and returns the total number of products that were read and processed.*/
+//---------------------------------------------------------------------------
+/* loadProducts() loads the information about our products.
+*     I leave it to you as an EXERCISE to determine how this function works,
+*     and to leave detailed comments.
+*     INCOMING DATA: "year, county, category, maxwind, victims" (all being read from the file)
+*     OUTGOING DATA: "year, country, category, maxwind, victims" (all with the count that they are in as the loop iterates) 
+*/
+int loadProducts(int year[], string county[], string category[], double maxwind[], int victims[], string fileName)
+{
+	cout<<"Enter the filename of your tornado database."<<endl;
+    getline(cin, fileName);
+    ifstream file(fileName);
+    string line;
+    int count = 0;
+    int next_year, next_victims;
+    string next_county, next_category, temp;
+    double next_maxwind;
+    while(getline(file,line)){
+        int pos = 0;
+        //parse the next line
+        pos = line.find(", ");
+        temp = line.substr(0, pos);
+        //Store and hold the temp variable as an integer from a string
+        next_year = stoi(temp);
+        //cout<<next_year;
+        
+        line.erase(0, pos+2);
+        pos = line.find(", ");
+        //No temp variable needed since the information being accessed here is already a string
+        next_county = line.substr(0, pos);
+        //cout<<" "<<next_county;
+        
+        line.erase(0, pos+2);
+        pos = line.find(", ");
+         //No temp variable needed since the information being accessed here is already a string
+        next_category = line.substr(0, pos);
+        //cout<<" "<<next_category;
+        
+        line.erase(0, pos+2);
+        pos = line.find(", ");
+        temp = line.substr(0, pos);
+        //Store and hold the temp variable as an double from a string
+        next_maxwind = stod(temp);
+        //cout<<" "<<next_maxwind;
+        
+        line.erase(0, pos+2);
+        //Store and hold the temp variable as an integer from a string
+        next_victims = stoi(line);
+        //cout<<" "<<next_victims<<endl;
+	   
+        year[count] = next_year;
+        county[count] = next_county;
+        category[count] = next_category;
+        maxwind[count] = next_maxwind;
+        victims[count] = next_victims;
+        
+        count++;
+    }
+    file.close();
+    return count;
+}
+
+//---------------------------------------------------------------------------
+/* menu() Prints menu option information to the user and returns selection.
+*     Displays a numbered menu options 1 - 6: calc ttl number of tornadoes, 
+*	 display all tornadoes in db, calculate num for a year, calculate num 
+*	 victims for a year, display all tornado information for a specific county,
+*	 and quit, respectively.
+*     INCOMING DATA: none
+*     OUTGOING DATA: integer choice selected*/
+int menu()
+{
+	int result = 0;
+	string line = "----------------------------------";
+  	cout << line << endl;
+  	cout << "Menu:" << endl;
+  	cout << line << endl;
+  	cout << "1. Calculate the total number of tornadoes." << endl;
+  	cout << "2. Display all tornadoes in database." << endl;
+  	cout << "3. Calculate number of tornaodes for a year." << endl;
+  	cout << "4. Calculate number of victims for a year." << endl;
+  	cout << "5. Display all tornado information for a specific county." << endl;
+  	cout << "6. Quit" << endl;
+  	cout << line << endl;
+
+  	cout << "Enter your choice: ";
+  	cin >> result;
+  	return result;
+}
+
+//---------------------------------------------------------------------------
+/* displayAll() Function displays the data in an appropriately formatted
+*	 manner for all the tornado data, one tornado per numbered line.
+*     INCOMING DATA: 5 arrays and the number of tornadoes in the database
+*     OUTGOING DATA: none*/
+void displayAll(int year[], string county[], string category[], double maxwind[], int victims[], const int numTorn)
+{
+	for (int i = 0; i < numTorn; i++) 
+	{
+		cout << "Tornado " << (i+1) << ":" << endl;
+		cout << "Year:     " << year[i] << endl;
+		cout << "County:   " << county[i] << endl;
+		cout << "Category: " << category[i] << endl;
+		cout << "Max Wind: " << maxwind[i] << endl;
+		cout << "Victims:  " << victims[i] << endl;
+		cout << endl;
+	}
+}
+
+//---------------------------------------------------------------------------
+/* numByYear() function asks the user for a specific year, and accepts that 
+*	 input from the user.  Function uses that input to process that database
+*	 and calculate the total number of tornadoes for the given year.
+*     INCOMING DATA: year array, number of tornadoes in db, PBR int result
+*     OUTGOING DATA: int result*/
+void numByYear(int year[], const int numTorn, int& result) {
+    int Year;
+    cout << "Enter the year: ";
+    cin >> Year;
+    int count = 0;
+    for (int i = 0; i < numTorn; i++) {
+        if (year[i] == Year) {
+            count++;
+            result = count;
+        }
+    }
+}
+
+
+//---------------------------------------------------------------------------
+/* vicByYear() function asks the user for a specific year, and accepts that 
+*	 input from the user.  Function uses that input to process that database
+*	 and calculate the total number of victims across all tornadoes 
+*	 for the given year.
+*     INCOMING DATA: year array, victims array, number of tornadoes in db
+*     OUTGOING DATA: int result*/
+int vicByYear(int year[], int victims[], const int numTorn) {
+    int Year;
+    cout << "Enter the year: ";
+    cin >> Year;
+    int numVictims = 0;
+    for (int i = 0; i < numTorn; i++) {
+        if (year[i] == Year) {
+            numVictims += victims[i];
+        }
+    }
+    return numVictims;
+}
+
+
+//---------------------------------------------------------------------------
+/* tornByCount() function asks the user for a specific county, and accepts that 
+*	 input from the user.  Function uses that input to process the database
+*	 and display ALL tornado data for that specific county in a numbered list.
+*     INCOMING DATA: 5 parallel arrays, number of tornadoes in db
+*     OUTGOING DATA: int result*/
+//**YOUR CODE HERE**
+void tornByCounty(int year[], string county[], string category[], double maxwind[], int victims[], const int numTorn, int& result) {
+    string targetCounty;
+    cout << "Enter the county: ";
+    cin.ignore(); // Clear the newline character from previous input
+    getline(cin, targetCounty); // Read the county
+    cout << "Tornado data for county: " << targetCounty << endl;
+    
+    for (int i = 0; i < numTorn; i++) {
+        if (county[i] == targetCounty) {
+            cout << "Tornado " << (i + 1) << ":" << endl;
+            // Display other information here
+           	cout << "Year:     " << year[i] << endl;
+			cout << "County:   " << county[i] << endl;
+			cout << "Category: " << category[i] << endl;
+			cout << "Max Wind: " << maxwind[i] << endl;
+			cout << "Victims:  " << victims[i] << endl;
+        }
+    }
+}
+
+
+
+project0.cpp
+Displaying project0.cpp.
